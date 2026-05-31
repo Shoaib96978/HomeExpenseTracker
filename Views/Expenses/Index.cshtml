@@ -1,0 +1,289 @@
+﻿@{
+    ViewData["Title"] = "All Expenses";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="het-page-wrap">
+
+    <!-- Page Header -->
+    <div class="het-page-header">
+        <div>
+            <h1 class="het-page-title">All Expenses</h1>
+            <p class="het-page-sub">Browse, search, and manage every transaction.</p>
+        </div>
+        <a href="@Url.Action("Create", "Expenses")" class="btn het-cta-btn">
+            <i class="fa-solid fa-plus me-1"></i> Add Expense
+        </a>
+    </div>
+
+    <!-- ░░ FILTERS BAR ░░ -->
+    <div class="het-card filter-bar fade-up mb-4" style="--delay:.05s">
+        <div class="row g-3 align-items-end">
+            <!-- Search -->
+            <div class="col-12 col-md-4">
+                <label class="het-label"><i class="fa-solid fa-magnifying-glass me-1"></i> Search</label>
+                <div class="search-wrap">
+                    <input type="text" id="searchInput" class="form-control het-input"
+                           placeholder="Search by item name…" autocomplete="off" />
+                    <span class="search-clear d-none" id="searchClear" title="Clear">
+                        <i class="fa-solid fa-xmark"></i>
+                    </span>
+                </div>
+            </div>
+            <!-- Category Filter -->
+            <div class="col-6 col-md-3">
+                <label class="het-label"><i class="fa-solid fa-tag me-1"></i> Category</label>
+                <select id="catFilter" class="form-select het-input">
+                    <option value="">All Categories</option>
+                    <option>Grocery</option>
+                    <option>Utility Bills</option>
+                    <option>Transport</option>
+                    <option>Medicine</option>
+                    <option>Education</option>
+                    <option>Repair</option>
+                    <option>Other</option>
+                </select>
+            </div>
+            <!-- Month Filter -->
+            <div class="col-6 col-md-3">
+                <label class="het-label"><i class="fa-solid fa-calendar me-1"></i> Month / Year</label>
+                <input type="month" id="monthFilter" class="form-control het-input" />
+            </div>
+            <!-- Reset -->
+            <div class="col-12 col-md-2">
+                <button id="resetFilters" class="btn het-outline-btn w-100">
+                    <i class="fa-solid fa-rotate-left me-1"></i> Reset
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ░░ EXPENSES TABLE CARD ░░ -->
+    <div class="het-card fade-up" style="--delay:.1s">
+        <!-- Table -->
+        <div class="table-responsive">
+            <table class="table het-table" id="expensesTable">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Item Name</th>
+                        <th>Amount</th>
+                        <th>Category</th>
+                        <th>Date</th>
+                        <th>Notes</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="expensesTbody">
+                    <tr>
+                        <td colspan="7" class="text-center py-5">
+                            <div class="spinner-border text-success" role="status"><span class="visually-hidden">Loading…</span></div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination + info bar -->
+        <div class="het-table-footer" id="paginationBar">
+            <span class="table-info-text" id="tableInfoText"></span>
+            <nav>
+                <ul class="pagination het-pagination mb-0" id="paginationList"></ul>
+            </nav>
+        </div>
+    </div>
+
+</div>
+
+<!-- ░░ Edit Modal ░░ -->
+<partial name="_EditModal"/>
+
+<!-- ░░ Delete Modal ░░ -->
+<partial name="_DeleteModal" />
+
+@section Scripts {
+    <script>
+        (function () {
+            const PAGE_SIZE = 10;
+            let allExpenses = [];
+            let filtered    = [];
+            let currentPage = 1;
+
+            const tbody      = document.getElementById('expensesTbody');
+            const infoText   = document.getElementById('tableInfoText');
+            const pagList    = document.getElementById('paginationList');
+            const searchInp  = document.getElementById('searchInput');
+            const searchClear= document.getElementById('searchClear');
+            const catFilter  = document.getElementById('catFilter');
+            const monthFilter= document.getElementById('monthFilter');
+            const resetBtn   = document.getElementById('resetFilters');
+
+            // Default month = current
+            const now = new Date();
+            monthFilter.value = now.toISOString().slice(0, 7);
+
+            // ── Load ──
+            async function loadExpenses() {
+                showTableLoader();
+                try {
+                    const res = await fetch('@Url.Action("Index", "Expenses")?format=json');
+                    if (!res.ok) throw new Error();
+                    allExpenses = await res.json();
+                    applyFilters();
+                } catch {
+                    showToast('Could not load expenses.', 'error');
+                }
+            }
+
+            function showTableLoader() {
+                tbody.innerHTML = `<tr><td colspan="7" class="text-center py-5">
+                    <div class="spinner-border text-success" role="status"><span class="visually-hidden">Loading…</span></div>
+                </td></tr>`;
+            }
+
+            // ── Filters ──
+            function applyFilters() {
+                const q   = searchInp.value.trim().toLowerCase();
+                const cat = catFilter.value;
+                const mon = monthFilter.value; // "YYYY-MM"
+
+                searchClear.classList.toggle('d-none', !q);
+
+                filtered = allExpenses.filter(e => {
+                    const matchQ   = !q   || e.itemName.toLowerCase().includes(q);
+                    const matchCat = !cat || e.category === cat;
+                    const matchMon = !mon || e.date.slice(0, 7) === mon;
+                    return matchQ && matchCat && matchMon;
+                });
+
+                currentPage = 1;
+                renderPage();
+            }
+
+            // ── Render ──
+            const CAT_BADGES = {
+                'Grocery':      'badge-grocery',
+                'Utility Bills':'badge-utility',
+                'Transport':    'badge-transport',
+                'Medicine':     'badge-medicine',
+                'Education':    'badge-education',
+                'Repair':       'badge-repair',
+                'Other':        'badge-other'
+            };
+
+            function formatNum(n) {
+                return Number(n).toLocaleString('en-PK', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+            }
+            function formatDate(d) {
+                return new Date(d).toLocaleDateString('en-PK', { day: '2-digit', month: 'short', year: 'numeric' });
+            }
+            function escHtml(s) {
+                return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+            }
+
+            function renderPage() {
+                const total = filtered.length;
+                const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+                currentPage = Math.min(currentPage, pages);
+
+                const start = (currentPage - 1) * PAGE_SIZE;
+                const slice = filtered.slice(start, start + PAGE_SIZE);
+
+                // Info text
+                infoText.textContent = total
+                    ? `Showing ${start + 1}–${Math.min(start + PAGE_SIZE, total)} of ${total} expense${total !== 1 ? 's' : ''}`
+                    : '';
+
+                // Empty state
+                if (!slice.length) {
+                    tbody.innerHTML = `<tr><td colspan="7" class="text-center py-5">
+                        <div class="empty-state">
+                            <div class="empty-icon">🔍</div>
+                            <p>No expenses match your filters.</p>
+                        </div>
+                    </td></tr>`;
+                    pagList.innerHTML = '';
+                    return;
+                }
+
+                // Rows
+                tbody.innerHTML = slice.map((r, i) => `
+                <tr class="fade-row" style="animation-delay:${i * 0.04}s">
+                    <td class="row-num">${start + i + 1}</td>
+                    <td class="fw-500">${escHtml(r.itemName)}</td>
+                    <td class="amount-cell">Rs ${formatNum(r.amount)}</td>
+                    <td><span class="cat-badge ${CAT_BADGES[r.category] || 'badge-other'}">${escHtml(r.category)}</span></td>
+                    <td class="date-cell">${formatDate(r.date)}</td>
+                    <td class="notes-cell">${escHtml(r.notes) || '<span class="muted-dash">—</span>'}</td>
+                    <td>
+                        <button class="btn-icon-act edit-btn" onclick="openEditModal(${r.id})" title="Edit">
+                            <i class="fa-solid fa-pen-to-square"></i>
+                        </button>
+                        <button class="btn-icon-act delete-btn" onclick="openDeleteModal(${r.id}, '${escHtml(r.itemName)}')" title="Delete">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>`).join('');
+
+                // Pagination
+                renderPagination(pages);
+            }
+
+            function renderPagination(pages) {
+                if (pages <= 1) { pagList.innerHTML = ''; return; }
+
+                let html = '';
+                // Prev
+                html += `<li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+                    <button class="page-link het-page-link" onclick="goPage(${currentPage - 1})">
+                        <i class="fa-solid fa-chevron-left"></i>
+                    </button></li>`;
+
+                for (let p = 1; p <= pages; p++) {
+                    if (pages > 7 && Math.abs(p - currentPage) > 2 && p !== 1 && p !== pages) {
+                        if (p === 2 || p === pages - 1) html += `<li class="page-item disabled"><span class="page-link">…</span></li>`;
+                        continue;
+                    }
+                    html += `<li class="page-item ${p === currentPage ? 'active' : ''}">
+                        <button class="page-link het-page-link" onclick="goPage(${p})">${p}</button>
+                    </li>`;
+                }
+
+                // Next
+                html += `<li class="page-item ${currentPage === pages ? 'disabled' : ''}">
+                    <button class="page-link het-page-link" onclick="goPage(${currentPage + 1})">
+                        <i class="fa-solid fa-chevron-right"></i>
+                    </button></li>`;
+
+                pagList.innerHTML = html;
+            }
+
+            window.goPage = function (p) {
+                currentPage = p;
+                renderPage();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            };
+
+            // ── Event Listeners ──
+            let debounceTimer;
+            searchInp.addEventListener('input', () => {
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(applyFilters, 280);
+            });
+            searchClear.addEventListener('click', () => { searchInp.value = ''; applyFilters(); });
+            catFilter.addEventListener('change', applyFilters);
+            monthFilter.addEventListener('change', applyFilters);
+            resetBtn.addEventListener('click', () => {
+                searchInp.value = '';
+                catFilter.value = '';
+                monthFilter.value = now.toISOString().slice(0, 7);
+                applyFilters();
+            });
+
+            // Reload after modal operations
+            document.addEventListener('expenseChanged', loadExpenses);
+
+            loadExpenses();
+        })();
+    </script>
+}

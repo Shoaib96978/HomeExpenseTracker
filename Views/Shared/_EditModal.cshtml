@@ -1,0 +1,101 @@
+﻿<!-- ======================================================
+     _EditModal.cshtml  —  shared partial for Edit Expense
+     ====================================================== -->
+<div class="modal fade het-modal" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content het-modal-content">
+
+            <div class="het-modal-header">
+                <span class="modal-title-icon">✏️</span>
+                <h5 class="het-modal-title" id="editModalLabel">Edit Expense</h5>
+                <button type="button" class="het-modal-close" data-bs-dismiss="modal" aria-label="Close">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="het-modal-body">
+                <!-- Loader state -->
+                <div id="editModalLoader" class="modal-inner-loader">
+                    <div class="spinner-border text-success" role="status"><span class="visually-hidden">Loading…</span></div>
+                    <p>Loading expense data…</p>
+                </div>
+
+                <!-- Form -->
+                <form id="editForm" novalidate autocomplete="off" class="d-none">
+                    <input type="hidden" id="editId" name="Id" />
+
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="het-label" for="editItemName">
+                                <i class="fa-solid fa-bag-shopping me-1"></i> Item Name <span class="req-star">*</span>
+                            </label>
+                            <input type="text" id="editItemName" name="ItemName" class="form-control het-input"
+                                   placeholder="Item name" maxlength="100" required />
+                            <div class="invalid-feedback">Please enter the item name.</div>
+                        </div>
+
+                        <div class="col-12 col-sm-6">
+                            <label class="het-label" for="editAmount">
+                                <i class="fa-solid fa-coins me-1"></i> Amount <span class="req-star">*</span>
+                            </label>
+                            <div class="input-group het-input-group">
+                                <span class="input-group-text het-prefix">Rs</span>
+                                <input type="number" id="editAmount" name="Amount" class="form-control het-input"
+                                       placeholder="0.00" min="0.01" step="0.01" required />
+                            </div>
+                            <div class="invalid-feedback">Please enter a valid amount.</div>
+                        </div>
+
+                        <div class="col-12 col-sm-6">
+                            <label class="het-label" for="editCategory">
+                                <i class="fa-solid fa-tag me-1"></i> Category <span class="req-star">*</span>
+                            </label>
+                            <select id="editCategory" name="Category" class="form-select het-input" required>
+                                <option value="" disabled>Select category…</option>
+                                <option value="Grocery">🛒 Grocery</option>
+                                <option value="Utility Bills">💡 Utility Bills</option>
+                                <option value="Transport">🚗 Transport</option>
+                                <option value="Medicine">💊 Medicine</option>
+                                <option value="Education">📚 Education</option>
+                                <option value="Repair">🔧 Repair</option>
+                                <option value="Other">📦 Other</option>
+                            </select>
+                            <div class="invalid-feedback">Please select a category.</div>
+                        </div>
+
+                        <div class="col-12 col-sm-6">
+                            <label class="het-label" for="editDate">
+                                <i class="fa-solid fa-calendar-day me-1"></i> Date <span class="req-star">*</span>
+                            </label>
+                            <input type="date" id="editDate" name="Date" class="form-control het-input" required />
+                            <div class="invalid-feedback">Please select a date.</div>
+                        </div>
+
+                        <div class="col-12">
+                            <label class="het-label" for="editNotes">
+                                <i class="fa-solid fa-note-sticky me-1"></i> Notes <span class="optional-label">(optional)</span>
+                            </label>
+                            <textarea id="editNotes" name="Notes" rows="2" class="form-control het-input"
+                                      placeholder="Any additional details…" maxlength="300"></textarea>
+                        </div>
+                    </div>
+                </form>
+            </div><!-- /modal-body -->
+
+            <div class="het-modal-footer">
+                <button type="button" class="btn het-outline-btn" data-bs-dismiss="modal">
+                    <i class="fa-solid fa-xmark me-1"></i> Cancel
+                </button>
+                <button type="button" id="editSaveBtn" class="btn het-cta-btn" onclick="submitEditForm()">
+                    <span class="btn-text"><i class="fa-solid fa-floppy-disk me-1"></i> Save Changes</span>
+                    <span class="btn-spinner d-none">
+                        <span class="spinner-border spinner-border-sm me-1" role="status"></span> Saving…
+                    </span>
+                </button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+

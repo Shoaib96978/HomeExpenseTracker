@@ -1,0 +1,217 @@
+﻿@{
+    ViewData["Title"] = "Add Expense";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="het-page-wrap">
+
+    <!-- Page Header -->
+    <div class="het-page-header">
+        <div>
+            <h1 class="het-page-title">Add Expense</h1>
+            <p class="het-page-sub">Record a new transaction to stay on top of your budget.</p>
+        </div>
+        <a href="@Url.Action("Index", "Expenses")" class="btn het-outline-btn">
+            <i class="fa-solid fa-arrow-left me-1"></i> Back to Expenses
+        </a>
+    </div>
+
+    <!-- ░░ FORM LAYOUT ░░ -->
+    <div class="row justify-content-center">
+        <div class="col-12 col-lg-7 col-xl-6">
+
+            <div class="het-card create-form-card fade-up" style="--delay:.05s">
+
+                <!-- Form Header Accent -->
+                <div class="form-card-accent">
+                    <span class="form-card-icon">💳</span>
+                    <div>
+                        <span class="form-card-title">New Transaction</span>
+                        <span class="form-card-date" id="formDateDisplay"></span>
+                    </div>
+                </div>
+
+                <form id="createForm" novalidate autocomplete="off">
+                    @Html.AntiForgeryToken()
+
+                    <!-- Item Name -->
+                    <div class="het-form-group">
+                        <label class="het-label" for="itemName">
+                            <i class="fa-solid fa-bag-shopping me-1"></i> Item Name <span class="req-star">*</span>
+                        </label>
+                        <input type="text" id="itemName" name="ItemName"
+                               class="form-control het-input" placeholder="e.g. Grocery run, Electricity bill…"
+                               maxlength="100" required />
+                        <div class="invalid-feedback">Please enter the item name.</div>
+                    </div>
+
+                    <!-- Amount -->
+                    <div class="het-form-group">
+                        <label class="het-label" for="amount">
+                            <i class="fa-solid fa-coins me-1"></i> Amount <span class="req-star">*</span>
+                        </label>
+                        <div class="input-group het-input-group">
+                            <span class="input-group-text het-prefix">Rs</span>
+                            <input type="number" id="amount" name="Amount"
+                                   class="form-control het-input" placeholder="0.00"
+                                   min="0.01" step="0.01" required />
+                        </div>
+                        <div class="invalid-feedback">Please enter a valid amount.</div>
+                    </div>
+
+                    <!-- Category -->
+                    <div class="het-form-group">
+                        <label class="het-label" for="category">
+                            <i class="fa-solid fa-tag me-1"></i> Category <span class="req-star">*</span>
+                        </label>
+                        <select id="category" name="Category" class="form-select het-input" required>
+                            <option value="" disabled selected>Select a category…</option>
+                            <option value="Grocery">🛒 Grocery</option>
+                            <option value="Utility Bills">💡 Utility Bills</option>
+                            <option value="Transport">🚗 Transport</option>
+                            <option value="Medicine">💊 Medicine</option>
+                            <option value="Education">📚 Education</option>
+                            <option value="Repair">🔧 Repair</option>
+                            <option value="Other">📦 Other</option>
+                        </select>
+                        <div class="invalid-feedback">Please select a category.</div>
+                    </div>
+
+                    <!-- Date -->
+                    <div class="het-form-group">
+                        <label class="het-label" for="expenseDate">
+                            <i class="fa-solid fa-calendar-day me-1"></i> Date <span class="req-star">*</span>
+                        </label>
+                        <input type="date" id="expenseDate" name="Date"
+                               class="form-control het-input" required />
+                        <div class="invalid-feedback">Please select a date.</div>
+                    </div>
+
+                    <!-- Notes -->
+                    <div class="het-form-group">
+                        <label class="het-label" for="notes">
+                            <i class="fa-solid fa-note-sticky me-1"></i> Notes
+                            <span class="optional-label">(optional)</span>
+                        </label>
+                        <textarea id="notes" name="Notes" rows="3"
+                                  class="form-control het-input"
+                                  placeholder="Any additional details…" maxlength="300"></textarea>
+                        <div class="char-counter"><span id="notesCount">0</span>/300</div>
+                    </div>
+
+                    <!-- Submit -->
+                    <div class="d-grid mt-4">
+                        <button type="submit" id="submitBtn" class="btn het-submit-btn">
+                            <span class="btn-text"><i class="fa-solid fa-floppy-disk me-2"></i>Save Expense</span>
+                            <span class="btn-spinner d-none">
+                                <span class="spinner-border spinner-border-sm me-2" role="status"></span>Saving…
+                            </span>
+                        </button>
+                    </div>
+
+                    <!-- After-save quick actions -->
+                    <div id="postSaveActions" class="post-save-bar d-none">
+                        <a href="@Url.Action("Create", "Expenses")" class="btn het-outline-btn btn-sm">
+                            <i class="fa-solid fa-plus me-1"></i> Add Another
+                        </a>
+                        <a href="@Url.Action("Index", "Expenses")" class="btn het-cta-btn btn-sm">
+                            <i class="fa-solid fa-list me-1"></i> View All
+                        </a>
+                    </div>
+
+                </form>
+            </div><!-- /card -->
+        </div>
+
+        <!-- Side tips panel -->
+        <div class="col-12 col-lg-4 col-xl-4 d-none d-lg-block">
+            <div class="het-card tips-card fade-up" style="--delay:.15s">
+                <div class="tips-header">
+                    <i class="fa-solid fa-lightbulb me-2"></i> Quick Tips
+                </div>
+                <ul class="tips-list">
+                    <li><span class="tip-dot"></span>Record expenses immediately so nothing slips through.</li>
+                    <li><span class="tip-dot"></span>Use clear item names — "Pharmacy visit" beats "Other".</li>
+                    <li><span class="tip-dot"></span>Add notes for recurring bills like "Monthly internet" to track patterns.</li>
+                    <li><span class="tip-dot"></span>Use the dashboard to see your category breakdown at a glance.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+@section Scripts {
+    <script>
+        (function () {
+            // Default date = today
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('expenseDate').value = today;
+            document.getElementById('formDateDisplay').textContent =
+                new Date().toLocaleDateString('en-PK', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+
+            // Char counter for notes
+            const notesEl = document.getElementById('notes');
+            const countEl = document.getElementById('notesCount');
+            notesEl.addEventListener('input', () => { countEl.textContent = notesEl.value.length; });
+
+            // ── Submit ──
+            const form      = document.getElementById('createForm');
+            const submitBtn = document.getElementById('submitBtn');
+            const btnText   = submitBtn.querySelector('.btn-text');
+            const btnSpin   = submitBtn.querySelector('.btn-spinner');
+
+            form.addEventListener('submit', async function (e) {
+                e.preventDefault();
+
+                if (!form.checkValidity()) {
+                    form.classList.add('was-validated');
+                    return;
+                }
+
+                // Button loader ON
+                btnText.classList.add('d-none');
+                btnSpin.classList.remove('d-none');
+                submitBtn.disabled = true;
+
+                const payload = {
+                    ItemName: document.getElementById('itemName').value.trim(),
+                    Amount:   parseFloat(document.getElementById('amount').value),
+                    Category: document.getElementById('category').value,
+                    Date:     document.getElementById('expenseDate').value,
+                    Notes:    document.getElementById('notes').value.trim()
+                };
+
+                try {
+                    const res = await fetch('@Url.Action("Create", "Expenses")', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                        },
+                        body: JSON.stringify(payload)
+                    });
+
+                    const data = await res.json();
+
+                    if (res.ok && data.success) {
+                        showToast('Expense saved successfully! 🎉', 'success');
+                        form.reset();
+                        form.classList.remove('was-validated');
+                        document.getElementById('expenseDate').value = today;
+                        countEl.textContent = '0';
+                        document.getElementById('postSaveActions').classList.remove('d-none');
+                    } else {
+                        showToast(data.message || 'Could not save expense.', 'error');
+                    }
+                } catch {
+                    showToast('Network error — please try again.', 'error');
+                } finally {
+                    btnText.classList.remove('d-none');
+                    btnSpin.classList.add('d-none');
+                    submitBtn.disabled = false;
+                }
+            });
+        })();
+    </script>
+}

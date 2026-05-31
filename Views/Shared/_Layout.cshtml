@@ -1,0 +1,105 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] — HomeExpenseTracker</title>
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+    <!-- Bootstrap 5 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css" />
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body>
+
+    <!-- ░░ PAGE LOADER ░░ -->
+    <div class="page-loader" id="pageLoader">
+        <div class="loader-inner">
+            <div class="loader-logo">💰</div>
+            <div class="loader-ring"></div>
+            <p class="loader-text">Loading…</p>
+        </div>
+    </div>
+
+    <!-- ░░ TOAST CONTAINER ░░ -->
+    <div id="toastContainer" class="toast-stack"></div>
+
+    <!-- ░░ NAVBAR ░░ -->
+    <nav class="navbar fixed-top het-navbar">
+        <div class="container-fluid px-4">
+
+            <!-- Brand -->
+            <a class="het-brand" href="@Url.Action("Index", "Home")">
+                <span class="brand-icon">💰</span>
+                <span class="brand-name">Home<span class="brand-accent">Expense</span></span>
+            </a>
+
+            <!-- Mobile Toggler -->
+            <button class="navbar-toggler het-toggler ms-auto me-2 d-lg-none"
+                    type="button"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#navMenu"
+                    aria-controls="navMenu"
+                    aria-expanded="false"
+                    aria-label="Toggle navigation">
+                <i class="fa-solid fa-bars"></i>
+            </button>
+
+            <!-- Nav Links -->
+            <div class="collapse navbar-collapse" id="navMenu">
+                <ul class="navbar-nav ms-auto align-items-lg-center gap-1">
+                    <li class="nav-item">
+                        <a class="nav-link het-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Home" ? "active" : "")"
+                               href="@Url.Action("Index", "Home")">
+                            <i class="fa-solid fa-gauge-high me-1"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link het-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Expenses" && ViewContext.RouteData.Values["action"]?.ToString() == "Index" ? "active" : "")"
+                               href="@Url.Action("Index", "Expenses")">
+                            <i class="fa-solid fa-list-ul me-1"></i> All Expenses
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link het-nav-link het-btn-add @(ViewContext.RouteData.Values["action"]?.ToString() == "Create" ? "active" : "")"
+                               href="@Url.Action("Create", "Expenses")">
+                            <i class="fa-solid fa-plus me-1"></i> Add Expense
+                        </a>
+                    </li>
+                </ul>
+            </div>
+
+        </div>
+    </nav>
+
+    <!-- ░░ MAIN CONTENT ░░ -->
+    <main class="het-main">
+        @RenderBody()
+    </main>
+
+    <!-- ░░ FOOTER ░░ -->
+    <footer class="het-footer">
+        <div class="container-fluid px-4">
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                <span class="footer-brand">💰 HomeExpenseTracker</span>
+                <span class="footer-copy">© @DateTime.Now.Year — Track smarter, spend wiser.</span>
+                <span class="footer-stack">ASP.NET MVC · EF Core · SQLite</span>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
+    <!-- Chart.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+    <!-- Custom JS -->
+    <script src="~/js/site.js" asp-append-version="true"></script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+
+</body>
+</html>

@@ -1,0 +1,36 @@
+﻿<div class="modal fade het-modal" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content het-modal-content">
+
+            <div class="het-modal-header">
+                <span class="modal-title-icon">🗑️</span>
+                <h5 class="het-modal-title" id="deleteModalLabel">Confirm Delete</h5>
+                <button type="button" class="het-modal-close" data-bs-dismiss="modal" aria-label="Close">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="het-modal-body text-center py-2">
+                <div class="delete-warning-icon">⚠️</div>
+                <p class="delete-confirm-text">
+                    Are you sure you want to delete<br>
+                    <strong id="deleteItemName" class="text-white"></strong>?
+                </p>
+                <p class="delete-sub-text">This action cannot be undone.</p>
+            </div>
+
+            <div class="het-modal-footer justify-content-center">
+                <button type="button" class="btn het-outline-btn" data-bs-dismiss="modal">
+                    <i class="fa-solid fa-arrow-left me-1"></i> Cancel
+                </button>
+                <button type="button" id="confirmDeleteBtn" class="btn het-danger-btn" onclick="confirmDelete()">
+                    <span class="btn-text"><i class="fa-solid fa-trash me-1"></i> Delete</span>
+                    <span class="btn-spinner d-none">
+                        <span class="spinner-border spinner-border-sm me-1" role="status"></span> Deleting…
+                    </span>
+                </button>
+            </div>
+
+        </div>
+    </div>
+</div>

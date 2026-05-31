@@ -1,0 +1,222 @@
+﻿@{
+    ViewData["Title"] = "Dashboard";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<!-- DASHBOARD -->
+<div class="het-page-wrap">
+
+    <!-- Page Header -->
+    <div class="het-page-header">
+        <div>
+            <h1 class="het-page-title">Dashboard</h1>
+            <p class="het-page-sub">Your financial overview at a glance.</p>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <span class="het-month-badge" id="currentMonthLabel"></span>
+            <a href="@Url.Action("Create", "Expenses")" class="btn het-cta-btn">
+                <i class="fa-solid fa-plus me-1"></i> Add Expense
+            </a>
+        </div>
+    </div>
+
+    <!-- SUMMARY CARDS -->
+    <div class="row g-4 mb-5" id="summaryCards">
+
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="het-card stat-card stat-green fade-up" style="--delay:.05s">
+                <div class="stat-icon-wrap green-glow">
+                    <i class="fa-solid fa-wallet"></i>
+                </div>
+                <div class="stat-body">
+                    <span class="stat-label">Total Spent This Month</span>
+                    <span class="stat-value" id="totalSpent">—</span>
+                </div>
+                <div class="stat-shine"></div>
+            </div>
+        </div>
+
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="het-card stat-card stat-blue fade-up" style="--delay:.1s">
+                <div class="stat-icon-wrap blue-glow">
+                    <i class="fa-solid fa-receipt"></i>
+                </div>
+                <div class="stat-body">
+                    <span class="stat-label">Total Expenses Count</span>
+                    <span class="stat-value" id="totalCount">—</span>
+                </div>
+                <div class="stat-shine"></div>
+            </div>
+        </div>
+
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="het-card stat-card stat-amber fade-up" style="--delay:.15s">
+                <div class="stat-icon-wrap amber-glow">
+                    <i class="fa-solid fa-fire-flame-curved"></i>
+                </div>
+                <div class="stat-body">
+                    <span class="stat-label">Highest Category</span>
+                    <span class="stat-value small-val" id="topCategory">—</span>
+                </div>
+                <div class="stat-shine"></div>
+            </div>
+        </div>
+
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="het-card stat-card stat-purple fade-up" style="--delay:.2s">
+                <div class="stat-icon-wrap purple-glow">
+                    <i class="fa-solid fa-arrow-trend-up"></i>
+                </div>
+                <div class="stat-body">
+                    <span class="stat-label">vs Last Month</span>
+                    <span class="stat-value" id="vsLastMonth">—</span>
+                    <span class="stat-sub" id="vsLastMonthSub"></span>
+                </div>
+                <div class="stat-shine"></div>
+            </div>
+        </div>
+
+    </div><!-- /row cards -->
+    <!-- RECENT EXPENSES -->
+
+        <!-- Recent Expenses Table -->
+        <div class="col-12 col-xl-12">
+            <div class="het-card h-100 fade-up" style="--delay:.25s">
+                <div class="card-top-bar">
+                    <span class="card-section-title"><i class="fa-solid fa-clock-rotate-left me-2"></i>Recent Expenses</span>
+                    <a href="@Url.Action("Index", "Expenses")" class="card-view-all">View all <i class="fa-solid fa-arrow-right ms-1"></i></a>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table het-table" id="recentTable">
+                        <thead>
+                            <tr>
+                                <th>Item</th>
+                                <th>Amount</th>
+                                <th>Category</th>
+                                <th>Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recentTbody">
+                            <tr>
+                                <td colspan="5" class="text-center py-5">
+                                    <div class="empty-state">
+                                        <div class="empty-icon">📭</div>
+                                        <p>Loading recent expenses…</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+</div>
+
+<!-- Edit Modal (shared) -->
+<partial name="_EditModal" />
+
+<!-- Delete Modal (shared) -->
+<partial name="_DeleteModal" />
+
+@section Scripts {
+    <script>
+        (function () {
+            // Month label
+            const now = new Date();
+            document.getElementById('currentMonthLabel').textContent =
+                now.toLocaleString('default', { month: 'long', year: 'numeric' });
+
+            let categoryChart = null;
+
+            async function loadDashboard() {
+                try {
+                    const res = await fetch('@Url.Action("Summary", "Home")');
+                    if (!res.ok) throw new Error('Network error');
+                    const d = await res.json();
+
+                    // Cards
+                    document.getElementById('totalSpent').textContent = 'Rs ' + formatNum(d.totalThisMonth);
+                    document.getElementById('totalCount').textContent = d.expenseCount;
+                    document.getElementById('topCategory').textContent = d.highestCategory || 'N/A';
+
+                    const diff = d.totalThisMonth - d.totalLastMonth;
+                    const pct  = d.totalLastMonth > 0 ? Math.abs((diff / d.totalLastMonth) * 100).toFixed(1) : 0;
+                    const vsEl  = document.getElementById('vsLastMonth');
+                    const subEl = document.getElementById('vsLastMonthSub');
+                    if (diff > 0) {
+                        vsEl.innerHTML = '<span class="trend-up">▲ Rs ' + formatNum(diff) + '</span>';
+                        subEl.textContent = pct + '% more than last month';
+                    } else if (diff < 0) {
+                        vsEl.innerHTML = '<span class="trend-down">▼ Rs ' + formatNum(Math.abs(diff)) + '</span>';
+                        subEl.textContent = pct + '% less than last month';
+                    } else {
+                        vsEl.textContent = 'Same as last month';
+                    }
+
+                    // Recent table
+                    renderRecentTable(d.recentExpenses || []);
+
+
+                } catch (e) {
+                    showToast('Failed to load dashboard data.', 'error');
+                }
+            }
+
+            function formatNum(n) {
+                return Number(n).toLocaleString('en-PK', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+            }
+
+            const CAT_BADGES = {
+                'Grocery':      'badge-grocery',
+                'Utility Bills':'badge-utility',
+                'Transport':    'badge-transport',
+                'Medicine':     'badge-medicine',
+                'Education':    'badge-education',
+                'Repair':       'badge-repair',
+                'Other':        'badge-other'
+            };
+
+            function renderRecentTable(rows) {
+                const tbody = document.getElementById('recentTbody');
+                if (!rows.length) {
+                    tbody.innerHTML = `<tr><td colspan="5" class="text-center py-5">
+                        <div class="empty-state">
+                            <div class="empty-icon">📭</div>
+                            <p>No expenses recorded yet.</p>
+                            <a href="@Url.Action("Create", "Expenses")" class="btn het-cta-btn btn-sm mt-2">Add your first expense</a>
+                        </div></td></tr>`;
+                    return;
+                }
+                tbody.innerHTML = rows.map(r => `
+                <tr class="fade-row">
+                    <td class="fw-500">${escHtml(r.itemName)}</td>
+                    <td class="amount-cell">Rs ${formatNum(r.amount)}</td>
+                    <td><span class="cat-badge ${CAT_BADGES[r.category] || 'badge-other'}">${escHtml(r.category)}</span></td>
+                    <td class="date-cell">${formatDate(r.date)}</td>
+                    <td>
+                        <button class="btn-icon-act edit-btn" onclick="openEditModal(${r.id})" title="Edit">
+                            <i class="fa-solid fa-pen-to-square"></i>
+                        </button>
+                        <button class="btn-icon-act delete-btn" onclick="openDeleteModal(${r.id}, '${escHtml(r.itemName)}')" title="Delete">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>`).join('');
+            }
+
+            function formatDate(d) {
+                return new Date(d).toLocaleDateString('en-PK', { day: '2-digit', month: 'short', year: 'numeric' });
+            }
+            function escHtml(s) {
+                return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+            }
+
+            loadDashboard();
+            // Reload after edit/delete from modal
+            document.addEventListener('expenseChanged', loadDashboard);
+        })();
+    </script>
+}
